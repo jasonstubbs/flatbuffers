@@ -947,7 +947,7 @@ void TestError(const char *src, const char *error_substr,
 // Also useful for coverage, making sure these paths are run.
 void ErrorTest() {
   // In order they appear in idl_parser.cpp
-  TestError("table X { Y:byte; } root_type X; { Y: 999 }", "bit field");
+  TestError("table X { Y:byte; } root_type X; { Y: 999 }", "does not fit");
   TestError(".0", "floating point");
   TestError("\"\0", "illegal");
   TestError("\"\\q", "escape code");
@@ -1062,18 +1062,18 @@ void IntegerOutOfRangeTest() {
 }
 
 void IntegerBoundaryTest() {
-    TEST_EQ(TestValue<int8_t>("{ Y:127 }","byte"), 127);
-    TEST_EQ(TestValue<int8_t>("{ Y:-128 }","byte"), -128);
-    TEST_EQ(TestValue<uint8_t>("{ Y:255 }","ubyte"), 255);
-    TEST_EQ(TestValue<uint8_t>("{ Y:0 }","ubyte"), 0);
-    TEST_EQ(TestValue<int16_t>("{ Y:32767 }","short"), 32767);
-    TEST_EQ(TestValue<int16_t>("{ Y:-32768 }","short"), -32768);
-    TEST_EQ(TestValue<uint16_t>("{ Y:65535 }","ushort"), 65535);
-    TEST_EQ(TestValue<uint16_t>("{ Y:0 }","ushort"), 0);
-    TEST_EQ(TestValue<int32_t>("{ Y:2147483647 }","int"), 2147483647);
-    TEST_EQ(TestValue<int32_t>("{ Y:-2147483648 }","int"), -2147483648);
-    TEST_EQ(TestValue<uint32_t>("{ Y:4294967295 }","uint"), 4294967295);
-    TEST_EQ(TestValue<uint32_t>("{ Y:0 }","uint"), 0);
+  TEST_EQ(TestValue<int8_t>("{ Y:127 }","byte"), 127);
+  TEST_EQ(TestValue<int8_t>("{ Y:-128 }","byte"), -128);
+  TEST_EQ(TestValue<uint8_t>("{ Y:255 }","ubyte"), 255);
+  TEST_EQ(TestValue<uint8_t>("{ Y:0 }","ubyte"), 0);
+  TEST_EQ(TestValue<int16_t>("{ Y:32767 }","short"), 32767);
+  TEST_EQ(TestValue<int16_t>("{ Y:-32768 }","short"), -32768);
+  TEST_EQ(TestValue<uint16_t>("{ Y:65535 }","ushort"), 65535);
+  TEST_EQ(TestValue<uint16_t>("{ Y:0 }","ushort"), 0);
+  TEST_EQ(TestValue<int32_t>("{ Y:2147483647 }","int"), 2147483647);
+  TEST_EQ(TestValue<int32_t>("{ Y:-2147483648 }","int"), -2147483648);
+  TEST_EQ(TestValue<uint32_t>("{ Y:4294967295 }","uint"), 4294967295);
+  TEST_EQ(TestValue<uint32_t>("{ Y:0 }","uint"), 0);
 }
 
 void UnicodeTest() {

@@ -86,48 +86,22 @@ CheckedError Parser::Error(const std::string &msg) {
 
 inline CheckedError NoError() { return CheckedError(false); }
 
-// Ensure that integer values we parse fit inside the declared integer type for signed types.
-CheckedError Parser::CheckBitsFitSigned(int64_t val, size_t bits) {
-  // Left-shifting a 64-bit value by 64 bits or more is undefined
-  // behavior (C99 6.5.7), so check *before* we shift.
-  if (bits < 64) {
-    // Bits we allow to be used.
-    auto mask = static_cast<int64_t>((1ull << (bits - 1)) - 1);
-    if ((val & ~mask) != 0 &&  // Positive or unsigned.
-        (val |  mask) != -1)   // Negative.
-      return Error("constant does not fit in a signed " + NumToString(bits) +
-                   "-bit field");
-  }
-  return NoError();
-}
-
-// Ensure that integer values we parse fit inside the declared integer types for unsigned types.
-CheckedError Parser::CheckBitsFitUnsigned(int64_t val, size_t bits) {
-  // Left-shifting a 64-bit value by 64 bits or more is undefined
-  // behavior (C99 6.5.7), so check *before* we shift.
-  if (bits < 64) {
-    // Bits we allow to be used.
-    auto mask = static_cast<int64_t>((1ull << bits) - 1);
-    if ((val & ~mask) != 0 ||  // Positive or unsigned.
-        val < 0)               // Negative.
-      return Error("constant does not fit in an unsigned " + NumToString(bits) +
-                   "-bit field");
+// Ensure that integer values we parse fit inside the declared integer type.
+CheckedError Parser::CheckInRange(int64_t val, int64_t min, int64_t max) {
+  if (val < min || val > max) {
+      const std::string baseMessage = "constant does not fit";
+      if (val < min)
+          return Error(baseMessage + " (" + NumToString(val) + " < " + NumToString(min) + ")");
+      else
+          return Error(baseMessage + " (" + NumToString(val) + " > " + NumToString(max) + ")");
   }
   return NoError();
 }
 
 // atot: templated version of atoi/atof: convert a string to an instance of T.
-template<typename T> inline typename std::enable_if<!std::is_unsigned<T>::value, CheckedError>::type atot(const char *s, Parser &parser,
-                                                                                        T *val) {
+template<typename T> inline CheckedError atot(const char *s, Parser &parser, T *val) {
   int64_t i = StringToInt(s);
-  ECHECK(parser.CheckBitsFitSigned(i, sizeof(T) * 8));
-  *val = (T)i;
-  return NoError();
-}
-template<typename T> inline typename std::enable_if<std::is_unsigned<T>::value, CheckedError>::type atot(const char *s, Parser &parser,
-                                                                                         T *val) {
-  int64_t i = StringToInt(s);
-  ECHECK(parser.CheckBitsFitUnsigned(i, sizeof(T) * 8));
+  ECHECK(parser.CheckInRange(i, std::numeric_limits<T>::min(), std::numeric_limits<T>::max()));
   *val = (T)i;
   return NoError();
 }

@@ -521,7 +521,8 @@ class Parser : public ParserState {
   // of the schema provided. Returns non-empty error on any problems.
   std::string ConformTo(const Parser &base);
 
-  FLATBUFFERS_CHECKED_ERROR CheckBitsFit(int64_t val, size_t bits);
+  FLATBUFFERS_CHECKED_ERROR CheckBitsFitSigned(int64_t val, size_t bits);
+  FLATBUFFERS_CHECKED_ERROR CheckBitsFitUnsigned(int64_t val, size_t bits);
 
 private:
   FLATBUFFERS_CHECKED_ERROR Error(const std::string &msg);

@@ -88,14 +88,13 @@ inline CheckedError NoError() { return CheckedError(false); }
 
 // Ensure that integer values we parse fit inside the declared integer type.
 CheckedError Parser::CheckInRange(int64_t val, int64_t min, int64_t max) {
-  if (val < min || val > max) {
-      const std::string baseMessage = "constant does not fit";
-      if (val < min)
-          return Error(baseMessage + " (" + NumToString(val) + " < " + NumToString(min) + ")");
-      else
-          return Error(baseMessage + " (" + NumToString(val) + " > " + NumToString(max) + ")");
-  }
-  return NoError();
+  const std::string base_message = "constant does not fit";
+  if (val < min)
+    return Error(base_message + " (" + NumToString(val) + " < " + NumToString(min) + ")");
+  else if (val > max)
+    return Error(base_message + " (" + NumToString(val) + " > " + NumToString(max) + ")");
+  else
+    return NoError();
 }
 
 // atot: templated version of atoi/atof: convert a string to an instance of T.

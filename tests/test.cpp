@@ -134,12 +134,21 @@ flatbuffers::unique_ptr_t CreateFlatBufferTest(std::string &buffer) {
   // Create an array of sorted tables, can be used with binary search when read:
   auto vecoftables = builder.CreateVectorOfSortedTables(mlocs, 3);
 
+  // Create an array of sorted structs,
+  // can be used with binary search when read:
+  std::vector<Ability> abilities;
+  abilities.push_back(Ability(4, 40));
+  abilities.push_back(Ability(3, 30));
+  abilities.push_back(Ability(2, 20));
+  abilities.push_back(Ability(1, 10));
+  auto vecofstructs = builder.CreateVectorOfSortedStructs(&abilities);
+
   // shortcut for creating monster with all fields set:
   auto mloc = CreateMonster(builder, &vec, 150, 80, name, inventory, Color_Blue,
                             Any_Monster, mlocs[1].Union(), // Store a union.
                             testv, vecofstrings, vecoftables, 0, 0, 0, false,
                             0, 0, 0, 0, 0, 0, 0, 0, 0, 3.14159f, 3.0f, 0.0f,
-                            vecofstrings2);
+                            vecofstrings2, vecofstructs);
 
   FinishMonsterBuffer(builder, mloc);
 
@@ -249,6 +258,18 @@ void AccessFlatBufferTest(const uint8_t *flatbuf, size_t length,
   TEST_NOTNULL(vecoftables->LookupByKey("Fred"));
   TEST_NOTNULL(vecoftables->LookupByKey("Wilma"));
 
+  // Test accessing a vector of sorted structs
+  auto vecofstructs = monster->testarrayofsortedstruct();
+  if (vecofstructs) {  // not filled in monster_test.bfbs
+    for (size_t i = 0; i < vecofstructs->size()-1; i++) {
+      auto left = vecofstructs->Get(i);
+      auto right = vecofstructs->Get(i+1);
+      TEST_EQ(true, (left->KeyCompareLessThan(right)));
+    }
+    TEST_NOTNULL(vecofstructs->LookupByKey(3));
+    TEST_EQ(static_cast<const Ability*>(nullptr), vecofstructs->LookupByKey(5));
+  }
+
   // Since Flatbuffers uses explicit mechanisms to override the default
   // compiler alignment, double check that the compiler indeed obeys them:
   // (Test consists of a short and byte):
@@ -285,10 +306,23 @@ void MutateFlatBuffersTest(uint8_t *flatbuf, std::size_t length) {
   auto hp_ok = monster->mutate_hp(10);
   TEST_EQ(hp_ok, true);  // Field was present.
   TEST_EQ(monster->hp(), 10);
+  // Mutate to default value
+  auto hp_ok_default = monster->mutate_hp(100);
+  TEST_EQ(hp_ok_default, true);  // Field was present.
+  TEST_EQ(monster->hp(), 100);
+  // Test that mutate to default above keeps field valid for further mutations
+  auto hp_ok_2 = monster->mutate_hp(20);
+  TEST_EQ(hp_ok_2, true);
+  TEST_EQ(monster->hp(), 20);
   monster->mutate_hp(80);
 
+  // Monster originally at 150 mana (default value)
+  auto mana_default_ok = monster->mutate_mana(150);  // Mutate to default value.
+  TEST_EQ(mana_default_ok, true);  // Mutation should succeed, because default value.
+  TEST_EQ(monster->mana(), 150);
   auto mana_ok = monster->mutate_mana(10);
   TEST_EQ(mana_ok, false);  // Field was NOT present, because default value.
+  TEST_EQ(monster->mana(), 150);
 
   // Mutate structs.
   auto pos = monster->mutable_pos();

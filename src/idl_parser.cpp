@@ -86,21 +86,29 @@ CheckedError Parser::Error(const std::string &msg) {
 
 inline CheckedError NoError() { return CheckedError(false); }
 
+inline std::string OutOfRangeErrorMsg(int64_t val, const std::string& op,
+                                      int64_t limit) {
+  const std::string cause = NumToString(val) + op + NumToString(limit);
+  return "constant does not fit (" + cause + ")";
+}
+
 // Ensure that integer values we parse fit inside the declared integer type.
 CheckedError Parser::CheckInRange(int64_t val, int64_t min, int64_t max) {
-  const std::string base_message = "constant does not fit";
   if (val < min)
-    return Error(base_message + " (" + NumToString(val) + " < " + NumToString(min) + ")");
+    return Error(OutOfRangeErrorMsg(val, " < ", min));
   else if (val > max)
-    return Error(base_message + " (" + NumToString(val) + " > " + NumToString(max) + ")");
+    return Error(OutOfRangeErrorMsg(val, " > ", max));
   else
     return NoError();
 }
 
 // atot: templated version of atoi/atof: convert a string to an instance of T.
-template<typename T> inline CheckedError atot(const char *s, Parser &parser, T *val) {
+template<typename T> inline CheckedError atot(const char *s, Parser &parser,
+                             T *val) {
   int64_t i = StringToInt(s);
-  ECHECK(parser.CheckInRange(i, std::numeric_limits<T>::min(), std::numeric_limits<T>::max()));
+  const int64_t min = std::numeric_limits<T>::min();
+  const int64_t max = std::numeric_limits<T>::max();
+  ECHECK(parser.CheckInRange(i, min, max));
   *val = (T)i;
   return NoError();
 }
